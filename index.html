@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JEE Main Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #da755b;
+    --accent-soft: rgba(218,117,91,0.12);
+    --accent-softer: rgba(218,117,91,0.06);
+    --bg: #0e0e0f;
+    --bg2: #141415;
+    --bg3: #1a1a1c;
+    --bg4: #202022;
+    --bg5: #272729;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --text: #f0ede8;
+    --text2: #a09c96;
+    --text3: #5a5752;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --sidebar: 220px;
+    --low: #e06b6b;
+    --mid: #e0a96b;
+    --high: #6bbf7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar); min-height: 100vh; background: var(--bg2);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    padding: 20px 0; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+    transition: width 0.3s ease;
+  }
+  .sidebar-logo {
+    padding: 0 18px 24px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border); margin-bottom: 12px;
+  }
+  .logo-icon {
+    width: 30px; height: 30px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+  }
+  .logo-text { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; color: var(--text); }
+  .logo-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 18px;
+    cursor: pointer; border-radius: 0; transition: all 0.15s ease;
+    font-size: 13px; font-weight: 400; color: var(--text2); position: relative;
+    margin: 1px 8px; border-radius: 8px;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 60%; background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+  .nav-section { padding: 20px 18px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 500; }
+  .sidebar-bottom { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--border); }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar); flex: 1; min-height: 100vh; overflow-y: auto; }
+  .page { display: none; padding: 32px 36px; animation: fadeIn 0.2s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; }
+  .page-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px; transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+
+  /* COUNTDOWN */
+  .countdown-card {
+    background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 28px 32px; margin-bottom: 24px; position: relative; overflow: hidden;
+  }
+  .countdown-card::before {
+    content: ''; position: absolute; right: -40px; top: -40px;
+    width: 180px; height: 180px; background: var(--accent); opacity: 0.04; border-radius: 50%;
+  }
+  .countdown-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 16px; font-weight: 500; }
+  .countdown-digits { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 16px; }
+  .digit-block { text-align: center; }
+  .digit-num { font-size: 42px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; line-height: 1; letter-spacing: -0.04em; }
+  .digit-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+  .digit-sep { font-size: 32px; color: var(--text3); padding-bottom: 6px; }
+  .jee-date-input {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit;
+    cursor: pointer; outline: none; transition: border-color 0.2s;
+  }
+  .jee-date-input:focus { border-color: var(--accent); }
+
+  /* PROGRESS BAR */
+  .prog-bar-wrap { background: var(--bg4); border-radius: 99px; height: 6px; overflow: hidden; }
+  .prog-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+  .prog-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .prog-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .prog-pct { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
+
+  /* SUBJECT CARDS */
+  .subject-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden;
+  }
+  .subject-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .subject-card-icon { font-size: 22px; margin-bottom: 12px; }
+  .subject-card-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .subject-card-count { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+  .subject-card-pct { font-size: 24px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; }
+
+  /* CHAPTER TABLE */
+  .chapter-table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+  .chapter-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .chapter-table th {
+    background: var(--bg3); padding: 10px 12px; text-align: center;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3);
+    font-weight: 500; border-bottom: 1px solid var(--border); white-space: nowrap;
+    position: sticky; top: 0;
+  }
+  .chapter-table th:first-child { text-align: left; min-width: 180px; }
+  .chapter-table td {
+    padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    text-align: center;
+  }
+  .chapter-table tr:last-child td { border-bottom: none; }
+  .chapter-table tr:hover td { background: var(--bg3); }
+  .chapter-table td:first-child { text-align: left; font-size: 13px; color: var(--text); font-weight: 400; }
+  .chapter-num { color: var(--text3); font-size: 11px; margin-right: 6px; font-family: 'DM Mono', monospace; }
+
+  /* CHECKBOX */
+  .cb-wrap { display: flex; justify-content: center; align-items: center; }
+  .cb {
+    width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 5px;
+    cursor: pointer; appearance: none; background: transparent; transition: all 0.15s ease;
+    position: relative; flex-shrink: 0;
+  }
+  .cb:checked { background: var(--accent); border-color: var(--accent); }
+  .cb:checked::after {
+    content: ''; position: absolute; left: 4px; top: 1.5px;
+    width: 5px; height: 9px; border: 2px solid white; border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+  .cb:hover:not(:checked) { border-color: var(--accent); background: var(--accent-softer); }
+
+  /* CONFIDENCE */
+  .conf-wrap { display: flex; gap: 3px; justify-content: center; }
+  .conf-btn {
+    font-size: 9px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border2);
+    cursor: pointer; background: transparent; color: var(--text3); transition: all 0.15s; font-family: inherit; font-weight: 500; letter-spacing: 0.03em;
+  }
+  .conf-btn.low.active { background: rgba(224,107,107,0.18); border-color: var(--low); color: var(--low); }
+  .conf-btn.mid.active { background: rgba(224,169,107,0.18); border-color: var(--mid); color: var(--mid); }
+  .conf-btn.high.active { background: rgba(107,191,122,0.18); border-color: var(--high); color: var(--high); }
+  .conf-btn:hover { border-color: var(--text3); color: var(--text2); }
+
+  /* COUNTER */
+  .counter-wrap { display: flex; align-items: center; gap: 4px; justify-content: center; }
+  .counter-btn {
+    width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border2);
+    background: transparent; color: var(--text2); cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1;
+  }
+  .counter-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--border2); }
+  .counter-val { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text); min-width: 22px; text-align: center; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg3); padding: 4px; border-radius: 10px; width: fit-content; }
+  .tab {
+    padding: 7px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 400;
+    color: var(--text2); transition: all 0.2s ease; border: none; background: transparent; font-family: inherit;
+  }
+  .tab.active { background: var(--bg2); color: var(--text); font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* MOCK TESTS */
+  .mock-form { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+  .mock-form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); font-weight: 500; }
+  .form-input {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 9px 12px; color: var(--text); font-size: 13px; font-family: inherit;
+    outline: none; transition: border-color 0.2s; width: 100%;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .btn-primary {
+    background: var(--accent); border: none; border-radius: 8px; padding: 9px 18px;
+    color: white; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+    transition: all 0.15s ease; white-space: nowrap;
+  }
+  .btn-primary:hover { background: #c9654a; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .mock-list { display: flex; flex-direction: column; gap: 10px; }
+  .mock-entry {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; display: flex; align-items: center; gap: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+  .mock-date { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; min-width: 90px; }
+  .mock-name { font-size: 13px; color: var(--text); flex: 1; }
+  .mock-score-badge {
+    font-size: 15px; font-weight: 600; font-family: 'DM Mono', monospace;
+    padding: 4px 12px; border-radius: 6px; min-width: 60px; text-align: center;
+  }
+  .score-high { background: rgba(107,191,122,0.15); color: var(--high); }
+  .score-mid { background: rgba(224,169,107,0.15); color: var(--mid); }
+  .score-low { background: rgba(224,107,107,0.15); color: var(--low); }
+  .mock-delete { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 4px; border-radius: 4px; transition: all 0.15s; }
+  .mock-delete:hover { color: var(--low); background: rgba(224,107,107,0.1); }
+
+  /* SCORE CHART */
+  .score-chart { height: 120px; display: flex; align-items: flex-end; gap: 6px; padding: 0 4px; }
+  .score-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .score-bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; transition: height 0.5s cubic-bezier(0.34,1.56,0.64,1); min-height: 4px; opacity: 0.85; }
+  .score-bar-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* STAT CHIPS */
+  .stat-chips { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .stat-chip { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .stat-chip-val { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .stat-chip-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* OVERALL PROGRESS */
+  .overall-prog { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 24px; }
+  .overall-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 500; margin-bottom: 14px; }
+  .overall-bar-wrap { background: var(--bg4); border-radius: 99px; height: 8px; overflow: hidden; position: relative; }
+  .overall-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent) 0%, #e8956e 100%); transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 16px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px; color: var(--text3); font-size: 13px; }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+
+  /* Tooltip */
+  [title] { cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚛</div>
+    <div>
+      <div class="logo-text">JEE Tracker</div>
+      <div class="logo-sub">Main 2025</div>
+    </div>
+  </div>
+  <div class="nav-section">Navigation</div>
+  <div class="nav-item active" onclick="showPage('home')">
+    <span class="nav-icon">⌂</span> Home
+  </div>
+  <div class="nav-item" onclick="showPage('physics')">
+    <span class="nav-icon">⚡</span> Physics
+  </div>
+  <div class="nav-item" onclick="showPage('chemistry')">
+    <span class="nav-icon">⚗</span> Chemistry
+  </div>
+  <div class="nav-item" onclick="showPage('math')">
+    <span class="nav-icon">∑</span> Mathematics
+  </div>
+  <div class="nav-item" onclick="showPage('mocks')">
+    <span class="nav-icon">📊</span> Mock Tests
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Track your JEE Main preparation</div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="countdown-card">
+      <div class="countdown-label">⏳ Time until JEE Main</div>
+      <div class="countdown-digits">
+        <div class="digit-block">
+          <div class="digit-num" id="cd-days">---</div>
+          <div class="digit-label">Days</div>
+        </div>
+        <div class="digit-sep">:</div>
+        <div class="digit-block">
+          <div class="digit-num" id="cd-hours">--</div>
+          <div class="digit-label">Hours</div>
+        </div>
+        <div class="digit-sep">:</div>
+        <div class="digit-block">
+          <div class="digit-num" id="cd-mins">--</div>
+          <div class="digit-label">Mins</div>
+        </div>
+        <div class="digit-sep">:</div>
+        <div class="digit-block">
+          <div class="digit-num" id="cd-secs">--</div>
+          <div class="digit-label">Secs</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label style="font-size:12px;color:var(--text3);">Set exam date:</label>
+        <input type="date" class="jee-date-input" id="jee-date-pick" onchange="saveJeeDate(this.value)">
+      </div>
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="overall-prog">
+      <div class="overall-label">Overall Progress</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--text2);">All subjects combined</span>
+        <span style="font-size:13px;font-family:'DM Mono',monospace;color:var(--accent);" id="overall-pct">0%</span>
+      </div>
+      <div class="overall-bar-wrap">
+        <div class="overall-bar-fill" id="overall-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Subject Cards -->
+    <div class="section-title">Subjects</div>
+    <div class="grid-3" style="gap:16px;margin-bottom:24px;">
+      <div class="subject-card" onclick="showPage('physics')">
+        <div class="subject-card-icon">⚡</div>
+        <div class="subject-card-name">Physics</div>
+        <div class="subject-card-count">36 chapters · 7 books</div>
+        <div class="subject-card-pct" id="home-phys-pct">0%</div>
+        <div style="margin-top:12px;">
+          <div class="prog-bar-wrap"><div class="prog-bar-fill" id="home-phys-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="subject-card" onclick="showPage('chemistry')">
+        <div class="subject-card-icon">⚗</div>
+        <div class="subject-card-name">Chemistry</div>
+        <div class="subject-card-count">35 chapters · 3 subsections</div>
+        <div class="subject-card-pct" id="home-chem-pct">0%</div>
+        <div style="margin-top:12px;">
+          <div class="prog-bar-wrap"><div class="prog-bar-fill" id="home-chem-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="subject-card" onclick="showPage('math')">
+        <div class="subject-card-icon">∑</div>
+        <div class="subject-card-name">Mathematics</div>
+        <div class="subject-card-count">27 chapters · 6 books</div>
+        <div class="subject-card-pct" id="home-math-pct">0%</div>
+        <div style="margin-top:12px;">
+          <div class="prog-bar-wrap"><div class="prog-bar-fill" id="home-math-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="section-title">Quick Stats</div>
+    <div class="stat-chips">
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="stat-chapters-done">0</div>
+        <div class="stat-chip-label">Chapters completed</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="stat-books-checked">0</div>
+        <div class="stat-chip-label">Book checkboxes ticked</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="stat-mocks">0</div>
+        <div class="stat-chip-label">Mock tests logged</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="stat-avg-score">—</div>
+        <div class="stat-chip-label">Avg mock score</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHYSICS PAGE -->
+  <div class="page" id="page-physics">
+    <div class="page-header">
+      <div class="page-title">⚡ Physics</div>
+      <div class="page-sub">36 chapters</div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="prog-label">
+        <span class="prog-name">Progress</span>
+        <span class="prog-pct" id="phys-pct">0%</span>
+      </div>
+      <div class="prog-bar-wrap" style="height:8px;"><div class="prog-bar-fill" id="phys-bar" style="width:0%"></div></div>
+    </div>
+    <div class="chapter-table-wrap">
+      <table class="chapter-table" id="phys-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Chapter</th>
+            <th>Theory</th><th>Module</th><th>Cengage</th><th>Physics Galaxy</th><th>Irodov</th><th>Krotov</th><th>Pathfinder</th>
+            <th>Confidence</th><th>Qs Solved</th><th>Revisions</th>
+          </tr>
+        </thead>
+        <tbody id="phys-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CHEMISTRY PAGE -->
+  <div class="page" id="page-chemistry">
+    <div class="page-header">
+      <div class="page-title">⚗ Chemistry</div>
+      <div class="page-sub">35 chapters across 3 sections</div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="prog-label">
+        <span class="prog-name">Progress</span>
+        <span class="prog-pct" id="chem-pct">0%</span>
+      </div>
+      <div class="prog-bar-wrap" style="height:8px;"><div class="prog-bar-fill" id="chem-bar" style="width:0%"></div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="showChemTab('physical',this)">Physical Chem</button>
+      <button class="tab" onclick="showChemTab('organic',this)">Organic Chem</button>
+      <button class="tab" onclick="showChemTab('inorganic',this)">Inorganic Chem</button>
+    </div>
+
+    <div id="chem-physical">
+      <div class="chapter-table-wrap">
+        <table class="chapter-table">
+          <thead><tr>
+            <th style="text-align:left;">Chapter</th>
+            <th>Theory</th><th>Module</th><th>N-Awasthi</th>
+            <th>Confidence</th><th>Qs Solved</th><th>Revisions</th>
+          </tr></thead>
+          <tbody id="pchem-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="chem-organic" style="display:none;">
+      <div class="chapter-table-wrap">
+        <table class="chapter-table">
+          <thead><tr>
+            <th style="text-align:left;">Chapter</th>
+            <th>Theory</th><th>Module</th><th>Himanshu Pandey</th><th>MS Chauhan</th><th>Solomons</th>
+            <th>Confidence</th><th>Qs Solved</th><th>Revisions</th>
+          </tr></thead>
+          <tbody id="ochem-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="chem-inorganic" style="display:none;">
+      <div class="chapter-table-wrap">
+        <table class="chapter-table">
+          <thead><tr>
+            <th style="text-align:left;">Chapter</th>
+            <th>Theory</th><th>Module</th><th>Book</th>
+            <th>Confidence</th><th>Qs Solved</th><th>Revisions</th>
+          </tr></thead>
+          <tbody id="ichem-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATH PAGE -->
+  <div class="page" id="page-math">
+    <div class="page-header">
+      <div class="page-title">∑ Mathematics</div>
+      <div class="page-sub">27 chapters</div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="prog-label">
+        <span class="prog-name">Progress</span>
+        <span class="prog-pct" id="math-pct">0%</span>
+      </div>
+      <div class="prog-bar-wrap" style="height:8px;"><div class="prog-bar-fill" id="math-bar" style="width:0%"></div></div>
+    </div>
+    <div class="chapter-table-wrap">
+      <table class="chapter-table" id="math-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Chapter</th>
+            <th>Theory</th><th>Module</th><th>Cengage</th><th>Blackbook</th><th>SL Loney</th><th>Sameer Bansal</th>
+            <th>Confidence</th><th>Qs Solved</th><th>Revisions</th>
+          </tr>
+        </thead>
+        <tbody id="math-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MOCK TESTS PAGE -->
+  <div class="page" id="page-mocks">
+    <div class="page-header">
+      <div class="page-title">📊 Mock Tests</div>
+      <div class="page-sub">Log and track your performance</div>
+    </div>
+
+    <div class="mock-form">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:16px;">Add Test</div>
+      <div class="mock-form-grid">
+        <div class="form-group">
+          <label class="form-label">Test Name</label>
+          <input type="text" class="form-input" id="mock-name" placeholder="e.g. JEE Main PYQ 2023">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Score (/300)</label>
+          <input type="number" class="form-input" id="mock-score" placeholder="e.g. 240" min="0" max="300">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="mock-date">
+        </div>
+        <button class="btn-primary" onclick="addMock()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-chips" id="mock-stats" style="display:none;">
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="mock-count-val">0</div>
+        <div class="stat-chip-label">Tests taken</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="mock-avg-val">0</div>
+        <div class="stat-chip-label">Average score</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="mock-best-val">0</div>
+        <div class="stat-chip-label">Best score</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="mock-trend-val">—</div>
+        <div class="stat-chip-label">Trend (last 5)</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div id="mock-chart-wrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:16px;">Score History</div>
+      <div class="score-chart" id="score-chart"></div>
+    </div>
+
+    <!-- List -->
+    <div class="section-title">All Tests</div>
+    <div class="mock-list" id="mock-list">
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        No tests logged yet. Add your first mock test above.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ===== DATA =====
+const PHYSICS_CHAPTERS = [
+  'Units and Dimensions','Basic Maths','Vectors','Kinematics','Projectile Motion',
+  'Relative Motion','NLM','Friction','WEP','Circular Motion',
+  'Centre of Mass and Collision','Rotational Mechanics','Elasticity','Fluid Mechanics',
+  'Surface Tension and Viscosity','Thermal Expansion','Calorimetry','Heat Transfer','KTG',
+  'Thermodynamics','Gravitation','SHM','String Waves','Sound Waves','Electrostatics',
+  'Capacitance','Current Electricity','Magnetic Effect','EMI','AC','EMW',
+  'Ray Optics','Wave Optics','Modern Physics','Nuclear Physics','Semiconductors'
+];
+const PHYS_BOOKS = ['Theory','Module','Cengage','Physics Galaxy','Irodov','Krotov','Pathfinder'];
+
+const MATH_CHAPTERS = [
+  'Sets and Relations','Basic Math','Trigonometry 1','Trigonometry 2','Quadratic Equations',
+  'Sequence and Series','Straight Lines','Circle','Parabola','Ellipse','Hyperbola',
+  'Complex Numbers','PNC','Statistics','Binomial Theorem','Functions','ITF',
+  'Matrices and Determinants','LCD','MOD','AOD','Indefinite Integral','Definite Integral',
+  'Area Under Curve','Differential Equations','Vectors','3D Geometry','Probability'
+];
+const MATH_BOOKS = ['Theory','Module','Cengage','Blackbook','SL Loney','Sameer Bansal'];
+
+const PCHEM_CHAPTERS = [
+  'Atomic Structure','Mole Concept','Redox Reactions','Gaseous State','Thermodynamics',
+  'Chemical Equilibrium','Ionic Equilibrium','Chemical Kinetics','Electrochemistry',
+  'Liquid Solutions','Solid State','Surface Chemistry'
+];
+const PCHEM_BOOKS = ['Theory','Module','N-Awasthi'];
+
+const OCHEM_CHAPTERS = [
+  'IUPAC Nomenclature','POC','GOC','EAS','Isomerism','Hydrocarbons',
+  'Alkyl Halides','Alcohols and Ethers','Aldehydes and Ketones','Phenol',
+  'Carboxylic Acid and Derivatives','N-Containing Compounds','Biomolecules','Polymers'
+];
+const OCHEM_BOOKS = ['Theory','Module','Himanshu Pandey','MS Chauhan','Solomons'];
+
+const ICHEM_CHAPTERS = [
+  'Periodic Properties','Chemical Bonding','Hydrogen and Its Compounds','S-Block',
+  'P-Block','D and F Block','Coordination Compounds','Salt Analysis and Metallurgy','Environmental Chemistry'
+];
+const ICHEM_BOOKS = ['Theory','Module','Book'];
+
+// ===== STATE =====
+let state = JSON.parse(localStorage.getItem('jee-tracker-v2') || 'null') || {
+  jeeDate: '',
+  physics: {},
+  math: {},
+  pchem: {},
+  ochem: {},
+  ichem: {},
+  mocks: []
+};
+function save() { localStorage.setItem('jee-tracker-v2', JSON.stringify(state)); }
+
+function getChapState(subj, idx) {
+  if (!state[subj][idx]) state[subj][idx] = { books: {}, conf: '', qs: 0, rev: 0 };
+  return state[subj][idx];
+}
+
+// ===== PAGE NAV =====
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const navItems = document.querySelectorAll('.nav-item');
+  const map = { home: 0, physics: 1, chemistry: 2, math: 3, mocks: 4 };
+  navItems[map[name]].classList.add('active');
+  updateAll();
+}
+
+function showChemTab(tab, btn) {
+  ['physical','organic','inorganic'].forEach(t => {
+    document.getElementById('chem-' + t).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== RENDER TABLES =====
+function makeRow(subj, chapters, books, idx) {
+  const ch = chapters[idx];
+  const s = getChapState(subj, idx);
+  const tr = document.createElement('tr');
+
+  // Chapter name
+  const tdName = document.createElement('td');
+  tdName.innerHTML = `<span class="chapter-num">${String(idx+1).padStart(2,'0')}</span>${ch}`;
+  tr.appendChild(tdName);
+
+  // Book checkboxes
+  books.forEach(book => {
+    const td = document.createElement('td');
+    const wrap = document.createElement('div');
+    wrap.className = 'cb-wrap';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'cb';
+    cb.checked = !!s.books[book];
+    cb.title = book;
+    cb.onchange = () => {
+      s.books[book] = cb.checked;
+      save(); updateProgress();
+    };
+    wrap.appendChild(cb);
+    td.appendChild(wrap);
+    tr.appendChild(td);
+  });
+
+  // Confidence
+  const tdConf = document.createElement('td');
+  const confWrap = document.createElement('div');
+  confWrap.className = 'conf-wrap';
+  ['L','M','H'].forEach((lvl,i) => {
+    const classes = ['low','mid','high'];
+    const labels = ['Low','Mid','High'];
+    const btn = document.createElement('button');
+    btn.className = 'conf-btn ' + classes[i] + (s.conf === labels[i] ? ' active' : '');
+    btn.textContent = lvl;
+    btn.title = labels[i];
+    btn.onclick = () => {
+      s.conf = s.conf === labels[i] ? '' : labels[i];
+      save();
+      confWrap.querySelectorAll('.conf-btn').forEach((b,j) => {
+        b.className = 'conf-btn ' + classes[j] + (s.conf === labels[j] ? ' active' : '');
+      });
+    };
+    confWrap.appendChild(btn);
+  });
+  tdConf.appendChild(confWrap);
+  tr.appendChild(tdConf);
+
+  // Questions solved
+  const tdQs = document.createElement('td');
+  tdQs.appendChild(makeCounter(subj, idx, 'qs'));
+  tr.appendChild(tdQs);
+
+  // Revisions
+  const tdRev = document.createElement('td');
+  tdRev.appendChild(makeCounter(subj, idx, 'rev'));
+  tr.appendChild(tdRev);
+
+  return tr;
+}
+
+function makeCounter(subj, idx, field) {
+  const s = getChapState(subj, idx);
+  const wrap = document.createElement('div');
+  wrap.className = 'counter-wrap';
+  const minus = document.createElement('button');
+  minus.className = 'counter-btn';
+  minus.textContent = '−';
+  const val = document.createElement('span');
+  val.className = 'counter-val';
+  val.textContent = s[field];
+  const plus = document.createElement('button');
+  plus.className = 'counter-btn';
+  plus.textContent = '+';
+  plus.onclick = () => { s[field]++; val.textContent = s[field]; save(); updateProgress(); };
+  minus.onclick = () => { if(s[field]>0){s[field]--; val.textContent=s[field]; save(); updateProgress();} };
+  wrap.append(minus, val, plus);
+  return wrap;
+}
+
+function renderTable(bodyId, subj, chapters, books) {
+  const body = document.getElementById(bodyId);
+  body.innerHTML = '';
+  chapters.forEach((ch, idx) => {
+    body.appendChild(makeRow(subj, chapters, books, idx));
+  });
+}
+
+// ===== PROGRESS CALC =====
+function calcProgress(subj, chapters, books) {
+  let total = 0, done = 0;
+  chapters.forEach((ch, idx) => {
+    const s = getChapState(subj, idx);
+    books.forEach(book => { total++; if(s.books[book]) done++; });
+  });
+  return total === 0 ? 0 : Math.round((done / total) * 100);
+}
+
+function updateProgress() {
+  const physPct = calcProgress('physics', PHYSICS_CHAPTERS, PHYS_BOOKS);
+  const mathPct = calcProgress('math', MATH_CHAPTERS, MATH_BOOKS);
+  const pchemPct = calcProgress('pchem', PCHEM_CHAPTERS, PCHEM_BOOKS);
+  const ochemPct = calcProgress('ochem', OCHEM_CHAPTERS, OCHEM_BOOKS);
+  const ichemPct = calcProgress('ichem', ICHEM_CHAPTERS, ICHEM_BOOKS);
+  const chemTotal = PCHEM_CHAPTERS.length + OCHEM_CHAPTERS.length + ICHEM_CHAPTERS.length;
+  const chemWeighted = Math.round(
+    (pchemPct * PCHEM_CHAPTERS.length + ochemPct * OCHEM_CHAPTERS.length + ichemPct * ICHEM_CHAPTERS.length) / chemTotal
+  );
+  const overall = Math.round((physPct + mathPct + chemWeighted) / 3);
+
+  // Update bars
+  const set = (id, pct) => {
+    const el = document.getElementById(id);
+    if (el) el.style.width = pct + '%';
+  };
+  const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  set('phys-bar', physPct); setText('phys-pct', physPct + '%');
+  set('math-bar', mathPct); setText('math-pct', mathPct + '%');
+  set('chem-bar', chemWeighted); setText('chem-pct', chemWeighted + '%');
+  set('overall-bar', overall); setText('overall-pct', overall + '%');
+  set('home-phys-bar', physPct); setText('home-phys-pct', physPct + '%');
+  set('home-math-bar', mathPct); setText('home-math-pct', mathPct + '%');
+  set('home-chem-bar', chemWeighted); setText('home-chem-pct', chemWeighted + '%');
+
+  // Stats
+  let booksDone = 0, chaptersDone = 0;
+  const countBooks = (subj, chapters, books) => {
+    chapters.forEach((ch, idx) => {
+      const s = getChapState(subj, idx);
+      let allDone = true;
+      books.forEach(b => { if(s.books[b]) booksDone++; else allDone = false; });
+      if(allDone) chaptersDone++;
+    });
+  };
+  countBooks('physics', PHYSICS_CHAPTERS, PHYS_BOOKS);
+  countBooks('math', MATH_CHAPTERS, MATH_BOOKS);
+  countBooks('pchem', PCHEM_CHAPTERS, PCHEM_BOOKS);
+  countBooks('ochem', OCHEM_CHAPTERS, OCHEM_BOOKS);
+  countBooks('ichem', ICHEM_CHAPTERS, ICHEM_BOOKS);
+
+  setText('stat-chapters-done', chaptersDone);
+  setText('stat-books-checked', booksDone);
+  setText('stat-mocks', state.mocks.length);
+
+  const scores = state.mocks.map(m => m.score);
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+  setText('stat-avg-score', avg !== null ? avg : '—');
+}
+
+// ===== COUNTDOWN =====
+function updateCountdown() {
+  if (!state.jeeDate) {
+    ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => {
+      document.getElementById(id).textContent = id === 'cd-days' ? '---' : '--';
+    });
+    return;
+  }
+  const target = new Date(state.jeeDate + 'T00:00:00');
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) {
+    document.getElementById('cd-days').textContent = '000';
+    ['cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent = '00');
+    return;
+  }
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-days').textContent = String(days).padStart(3,'0');
+  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('cd-mins').textContent = String(mins).padStart(2,'0');
+  document.getElementById('cd-secs').textContent = String(secs).padStart(2,'0');
+}
+
+function saveJeeDate(val) { state.jeeDate = val; save(); updateCountdown(); }
+
+// ===== MOCK TESTS =====
+function addMock() {
+  const name = document.getElementById('mock-name').value.trim() || 'Mock Test';
+  const score = parseInt(document.getElementById('mock-score').value);
+  const date = document.getElementById('mock-date').value;
+  if (isNaN(score) || score < 0 || score > 300) { alert('Enter a valid score (0-300)'); return; }
+  if (!date) { alert('Select a date'); return; }
+  state.mocks.unshift({ name, score, date, id: Date.now() });
+  save();
+  document.getElementById('mock-name').value = '';
+  document.getElementById('mock-score').value = '';
+  renderMocks();
+  updateProgress();
+}
+
+function deleteMock(id) {
+  state.mocks = state.mocks.filter(m => m.id !== id);
+  save(); renderMocks(); updateProgress();
+}
+
+function getScoreClass(score) {
+  if (score >= 220) return 'score-high';
+  if (score >= 160) return 'score-mid';
+  return 'score-low';
+}
+
+function renderMocks() {
+  const list = document.getElementById('mock-list');
+  const stats = document.getElementById('mock-stats');
+  const chartWrap = document.getElementById('mock-chart-wrap');
+
+  if (state.mocks.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No tests logged yet. Add your first mock test above.</div>';
+    stats.style.display = 'none';
+    chartWrap.style.display = 'none';
+    return;
+  }
+
+  stats.style.display = 'flex';
+  chartWrap.style.display = 'block';
+
+  const scores = state.mocks.map(m => m.score);
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  const best = Math.max(...scores);
+  document.getElementById('mock-count-val').textContent = state.mocks.length;
+  document.getElementById('mock-avg-val').textContent = avg;
+  document.getElementById('mock-best-val').textContent = best;
+
+  // Trend
+  const last5 = [...state.mocks].reverse().slice(-5).map(m=>m.score);
+  if (last5.length >= 2) {
+    const trend = last5[last5.length-1] - last5[0];
+    document.getElementById('mock-trend-val').textContent = (trend >= 0 ? '+' : '') + trend;
+  }
+
+  // Chart (last 10 in chronological order)
+  const chartData = [...state.mocks].reverse().slice(-10);
+  const chart = document.getElementById('score-chart');
+  chart.innerHTML = '';
+  const maxScore = 300;
+  chartData.forEach(m => {
+    const wrap = document.createElement('div');
+    wrap.className = 'score-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'score-bar';
+    bar.style.height = Math.round((m.score / maxScore) * 100) + '%';
+    bar.title = `${m.name}: ${m.score}`;
+    const label = document.createElement('div');
+    label.className = 'score-bar-label';
+    label.textContent = m.score;
+    wrap.append(bar, label);
+    chart.appendChild(wrap);
+  });
+
+  // List
+  list.innerHTML = '';
+  state.mocks.forEach(m => {
+    const entry = document.createElement('div');
+    entry.className = 'mock-entry';
+    const dateStr = new Date(m.date + 'T00:00:00').toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+    entry.innerHTML = `
+      <div class="mock-date">${dateStr}</div>
+      <div class="mock-name">${m.name}</div>
+      <div class="mock-score-badge ${getScoreClass(m.score)}">${m.score}<span style="font-size:10px;opacity:0.7">/300</span></div>
+      <button class="mock-delete" onclick="deleteMock(${m.id})" title="Delete">✕</button>
+    `;
+    list.appendChild(entry);
+  });
+}
+
+// ===== INIT =====
+function updateAll() { updateProgress(); updateCountdown(); }
+
+function init() {
+  // Set date input
+  if (state.jeeDate) document.getElementById('jee-date-pick').value = state.jeeDate;
+
+  // Set today as default mock date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('mock-date').value = today;
+
+  // Render all tables
+  renderTable('phys-body', 'physics', PHYSICS_CHAPTERS, PHYS_BOOKS);
+  renderTable('math-body', 'math', MATH_CHAPTERS, MATH_BOOKS);
+  renderTable('pchem-body', 'pchem', PCHEM_CHAPTERS, PCHEM_BOOKS);
+  renderTable('ochem-body', 'ochem', OCHEM_CHAPTERS, OCHEM_BOOKS);
+  renderTable('ichem-body', 'ichem', ICHEM_CHAPTERS, ICHEM_BOOKS);
+
+  renderMocks();
+  updateAll();
+
+  // Countdown tick
+  setInterval(updateCountdown, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
