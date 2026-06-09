@@ -238,10 +238,21 @@
   .stat-chip-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
   /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; margin: 4px; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.07);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(218,117,91,0.5);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--accent);
+  }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  .main { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent; }
+  .chapter-table-wrap { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent; }
 
   /* OVERALL PROGRESS */
   .overall-prog { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 24px; }
